@@ -1,0 +1,2 @@
+# run by supercronic in the scheduler container; logs go to docker logs
+*/10 * * * * /app/sync.sh && wget -q -T 10 -O /dev/null "$HEARTCRON_URL"

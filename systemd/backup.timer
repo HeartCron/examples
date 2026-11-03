@@ -1,0 +1,10 @@
+# /etc/systemd/system/backup.timer
+[Unit]
+Description=Run the database backup every night
+
+[Timer]
+OnCalendar=*-*-* 03:17:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

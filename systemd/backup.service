@@ -1,0 +1,11 @@
+# /etc/systemd/system/backup.service
+[Unit]
+Description=Nightly database backup
+OnFailure=heartcron-fail@%n.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/heartcron/backup.service
+ExecStartPre=-/usr/bin/curl -fsS -m 10 --retry 3 -o /dev/null ${PING_URL}/start
+ExecStart=/usr/local/bin/backup.sh
+ExecStartPost=/usr/bin/curl -fsS -m 10 --retry 3 -o /dev/null ${PING_URL}

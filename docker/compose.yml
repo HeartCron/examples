@@ -1,0 +1,10 @@
+# The app and a scheduler container from the same image. supercronic reads
+# the crontab, passes environment variables to jobs and logs to stdout.
+services:
+  app:
+    image: registry.example.com/app:1.8
+  scheduler:
+    image: registry.example.com/app:1.8
+    command: ["supercronic", "/app/crontab"]
+    environment:
+      HEARTCRON_URL: ${HEARTCRON_URL}

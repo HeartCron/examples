@@ -1,0 +1,38 @@
+# A CronJob that reports its start and exit code to Heartcron and keeps the
+# job's own status, so Kubernetes still retries failures.
+# Guide: https://heartcron.com/guides/kubernetes-cronjob/
+#   kubectl create secret generic heartcron --from-literal=nightly-report=https://ping.heartcron.com/<uuid>
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: nightly-report
+spec:
+  schedule: "17 3 * * *"
+  timeZone: "Etc/UTC"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 600
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 3600
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: report
+              image: registry.example.com/report:1.4.2
+              env:
+                - name: PING_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: heartcron
+                      key: nightly-report
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  wget -q -T 10 -O /dev/null "$PING_URL/start" || true
+                  /app/report
+                  code=$?
+                  wget -q -T 10 -O /dev/null "$PING_URL/$code"
+                  exit $code

@@ -1,0 +1,31 @@
+name: check
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Shell scripts
+        run: shellcheck bash/*.sh backup-postgres/*.sh
+      - name: Python
+        run: python3 -m py_compile python/heartcron.py
+      - name: Node
+        run: node --check node/heartcron.mjs
+      - name: YAML
+        run: python3 -c "import sys,yaml; [list(yaml.safe_load_all(open(f))) for f in sys.argv[1:]]" kubernetes/cronjob.yaml docker/compose.yml github-actions/nightly.yml
+      - name: The bash wrapper reports start, exit code and output
+        run: |
+          python3 -c "
+          import http.server
+          class H(http.server.BaseHTTPRequestHandler):
+              def h(self):
+                  n=int(self.headers.get('Content-Length') or 0); b=self.rfile.read(n).decode() if n else ''
+                  open('/tmp/pings.log','a').write(self.path+' '+b.replace(chr(10),'|')+chr(10)); self.send_response(200); self.end_headers()
+              do_GET=do_POST=h
+              def log_message(self,*a): pass
+          http.server.HTTPServer(('127.0.0.1',8099),H).serve_forever()" &
+          sleep 1
+          HEARTCRON_URL=http://127.0.0.1:8099/x bash bash/heartcron-run.sh sh -c 'echo hello; exit 3' || test $? -eq 3
+          cat /tmp/pings.log
+          grep -q '^/x/start ' /tmp/pings.log && grep -q '^/x/3 hello' /tmp/pings.log

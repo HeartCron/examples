@@ -1,0 +1,8 @@
+# /etc/systemd/system/heartcron-fail@.service — reports any unit's failure
+[Unit]
+Description=Report a failure of %i to Heartcron
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/heartcron/%i
+ExecStart=/usr/bin/curl -fsS -m 10 --retry 3 -o /dev/null ${PING_URL}/fail
