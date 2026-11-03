@@ -4,7 +4,7 @@
 # Guide: https://heartcron.com/guides/monitor-backups/
 set -euo pipefail
 
-PING=${HEARTCRON_URL:?set HEARTCRON_URL to the check's ping URL}
+PING=${HEARTCRON_URL:?set HEARTCRON_URL to the ping URL of the check}
 FILE=/var/backups/app-$(date +%F).sql.gz
 MIN_BYTES=${MIN_BYTES:-1000000}
 
